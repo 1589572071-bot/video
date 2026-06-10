@@ -60,6 +60,7 @@ npm run dev
 
 ## 文档
 
+- [**交付物汇总（评委入口）**](DELIVERY.md) — 网页/邀请码/演示视频/产出 Case 一站式索引
 - [**代码使用说明**](CODE-USAGE.md) — 环境配置、四步流程、API 与常见问题
 - [项目说明文档](docs/Project-Documentation.md)
 - [精炼 PRD](docs/MetaCut-PRD-Refined.md)

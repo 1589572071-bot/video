@@ -1,0 +1,320 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* MetaCut 专业暗色「数据工坊」主题 - 完全遵循 PRD */
+:root {
+  /* 背景层级 */
+  --bg-deep: #0B0E14;
+  --bg-surface: #131821;
+  --bg-elevated: #1A1F2A;
+  --border-subtle: rgba(255,255,255,0.08);
+  --border-glow: rgba(0,240,255,0.3);
+
+  /* 主色 */
+  --primary-cyan: #00F0FF;
+  --primary-gold: #F5B041;
+  --accent-purple: #9D4EDD;
+
+  /* 文本 */
+  --text-primary: #FFFFFF;
+  --text-secondary: #B0B8C5;
+  --text-tertiary: #6C757D;
+
+  /* 轨道颜色 */
+  --track-shot: #3B82F6;
+  --track-subtitle: #10B981;
+  --track-audio: #F59E0B;
+  --track-visual: #8B5CF6;
+
+  /* 阶段颜色 */
+  --phase-hook: #EF4444;
+  --phase-problem: #F97316;
+  --phase-solution: #EAB308;
+  --phase-evidence: #22C55E;
+  --phase-cta: #06B6D4;
+
+  /* Pipeline 状态 */
+  --pipeline-waiting: #4B5563;
+  --pipeline-processing: #00F0FF;
+  --pipeline-success: #10B981;
+
+  /* 玻璃效果 */
+  --glass-blur: blur(12px);
+}
+
+/* 全局基础样式 */
+body {
+  color: var(--text-primary);
+  background: var(--bg-deep);
+  font-family: var(--font-geist-sans);
+}
+
+/* 玻璃卡片通用样式 */
+.glass-card {
+  background: rgba(19, 24, 33, 0.7);
+  backdrop-filter: var(--glass-blur);
+  border: 1px solid var(--border-subtle);
+  border-radius: 16px;
+}
+
+/* 按钮样式 - 渐变边框 CTA */
+.cta-button {
+  background: transparent;
+  border: 1px solid transparent;
+  background-image: linear-gradient(var(--bg-surface), var(--bg-surface)), 
+                    linear-gradient(135deg, var(--primary-cyan), var(--primary-gold));
+  background-origin: border-box;
+  background-clip: padding-box, border-box;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.cta-button:hover {
+  box-shadow: 0 0 20px rgba(0, 240, 255, 0.3);
+  transform: scale(1.02);
+}
+
+/* 时间轴指针 - 红色带光晕 */
+.timeline-pointer {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: #FF3366;
+  box-shadow: 0 0 6px #FF3366;
+  z-index: 20;
+  pointer-events: none;
+}
+
+/* 轨道样式 */
+.timeline-track {
+  height: 48px;
+  background: var(--bg-surface);
+  border-radius: 6px;
+  position: relative;
+  overflow: hidden;
+}
+
+/* 阶段覆盖层 */
+.phase-overlay {
+  position: absolute;
+  top: 0;
+  height: 100%;
+  opacity: 0.15;
+  transition: width 0.1s linear;
+}
+
+/* 资产卡片 */
+.asset-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  padding: 12px;
+  transition: all 0.2s ease;
+}
+
+.asset-card:hover {
+  border-color: var(--primary-cyan);
+  background: #1F2633;
+}
+
+/* 语义槽 */
+.semantic-slot {
+  height: 56px;
+  border: 2px dashed var(--border-subtle);
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+}
+
+.semantic-slot.filled {
+  background: linear-gradient(90deg, rgba(0,240,255,0.1), rgba(245,176,65,0.1));
+  border-style: solid;
+  border-color: var(--primary-cyan);
+}
+
+/* Pipeline Telemetry - 单个有趣进度条设计 */
+.pipeline-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: 16px;
+  padding: 20px 24px;
+  position: relative;
+  overflow: hidden;
+}
+
+.pipeline-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: linear-gradient(180deg, rgba(0,240,255,0.04) 0%, transparent 60%);
+  pointer-events: none;
+}
+
+/* 主进度条容器 */
+.pipeline-main-bar {
+  position: relative;
+  height: 8px;
+  background: #0F131B;
+  border-radius: 999px;
+  overflow: hidden;
+  border: 1px solid var(--border-subtle);
+}
+
+.pipeline-main-bar .progress {
+  height: 100%;
+  background: linear-gradient(90deg, #00F0FF, #F5B041, #00F0FF);
+  background-size: 200% 100%;
+  transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  border-radius: 999px;
+  position: relative;
+}
+
+/* 扫描线效果 */
+.pipeline-main-bar .scan-line {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 40px;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.6), transparent);
+  animation: scan 1.8s linear infinite;
+  opacity: 0.6;
+}
+
+@keyframes scan {
+  0% { left: -40px; }
+  100% { left: 100%; }
+}
+
+/* 当前步骤文字 */
+.pipeline-current-step {
+  font-size: 15px;
+  font-weight: 500;
+  margin: 14px 0 8px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pipeline-current-step .step-name {
+  color: var(--primary-cyan);
+}
+
+.pipeline-current-step .percent {
+  font-family: var(--font-geist-mono);
+  color: var(--text-tertiary);
+  font-size: 13px;
+}
+
+/* 步骤指示器 */
+.pipeline-stepper {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 12px;
+  position: relative;
+}
+
+.pipeline-stepper::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 12px;
+  right: 12px;
+  height: 1px;
+  background: var(--border-subtle);
+  transform: translateY(-50%);
+}
+
+.step-dot {
+  width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  background: #0F131B;
+  border: 2px solid var(--border-subtle);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10px;
+  color: var(--text-tertiary);
+  position: relative;
+  z-index: 2;
+  transition: all 0.3s ease;
+}
+
+.step-dot.active {
+  border-color: #00F0FF;
+  color: #00F0FF;
+  box-shadow: 0 0 8px rgba(0,240,255,0.4);
+}
+
+.step-dot.done {
+  border-color: #10B981;
+  color: #10B981;
+  background: rgba(16,185,129,0.1);
+}
+
+.step-dot .label {
+  position: absolute;
+  top: 26px;
+  font-size: 9px;
+  white-space: nowrap;
+  color: var(--text-tertiary);
+  text-align: center;
+}
+
+/* 跑马灯 */
+.marquee {
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.marquee span {
+  display: inline-block;
+  animation: marquee 8s linear infinite;
+}
+
+@keyframes marquee {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+/* 响应式抽屉 */
+@media (max-width: 1279px) {
+  .desktop-dock {
+    display: none;
+  }
+}
+
+/* 自定义滚动条 */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+/* 对比模式切换器 */
+.compare-tabs button {
+  transition: all 0.15s ease;
+}
+
+.compare-tabs button.active {
+  background: var(--primary-cyan);
+  color: var(--bg-deep);
+  border-color: var(--primary-cyan);
+}

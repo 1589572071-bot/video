@@ -56,13 +56,6 @@ npm run dev
 - 环境变量示例：`.env.example`
 - 当前使用模型：Doubao-Seed-2.0-lite（EP: ep-20260508213828-7ntjl）
 
-## 下一步（建议）
-
-1. 接入真实后端 API（FastAPI + Celery）
-2. 实现 Step1~4 真实调用与 `script_manifest.json` 解析
-3. 视频真实播放器 + 字幕 Karaoke 逐字高亮
-4. 增加 Supabase Realtime 或轮询真实状态
-
 ## 文档
 
 - [**代码使用说明**](CODE-USAGE.md) — 环境配置、四步流程、API 与常见问题

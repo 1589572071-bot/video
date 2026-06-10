@@ -32,11 +32,23 @@ npm run dev
 
 ## Prompt 资产
 
-7 个可配置 System Prompt 位于 `docs/prompts/`，对应 Step1~4 及修复逻辑，详见 [docs/prompts/README.md](docs/prompts/README.md)。
+共 **7 个编号位点**（`docs/prompts/01`–`07`）+ **4 个扩展 Prompt**（导演/润色/素材/包装），详见 [docs/prompts/README.md](docs/prompts/README.md)。
 
-已完整写入的 Prompt：
-- Step1 视频原子化解析：[docs/prompts/01-video-analysis.system.md](docs/prompts/01-video-analysis.system.md)
-- Step2 商品多模态解析（已更新为原子级提取版）：[docs/prompts/02-product-parse.system.md](docs/prompts/02-product-parse.system.md)
+| 编号 | 用途 | 状态 |
+|------|------|------|
+| 01 | Step1 视频原子解析 | 已写入（`docs` + `app/api/analyze/video/route.ts`） |
+| 02 | Step2 商品多模态解析 | 已写入（`docs` + `lib/prompts/product-parse-system.ts`） |
+| 03 | Step3 剧本缝合 | 已写入（`docs` + `lib/prompts/script-stitch-system.ts`） |
+| 07 | 7 维内容策略 | 已写入（嵌入 01 + `lib/prompts/content-strategy-system.ts`） |
+| 04 | 首帧垫图 | 占位；实际由 `lib/keyframe-generator.ts` 工程拼装 |
+| 06 | 分块 T2V/I2V | 占位；实际由 `lib/providers/wan26-video.ts` 工程拼装 |
+| 05 | JSON 修复重试 | 仅占位，尚未接入代码 |
+
+扩展（不在 01–07 编号内，但已上线）：
+- AI 导演意图解析 → `lib/prompts/director-intent-system.ts`
+- 商品字段润色 → `lib/prompts/product-polish-system.ts`
+- 素材高光分析 → `lib/providers/doubao-material-analyze.ts`（内联）
+- 封面/卖点卡底图 → `lib/providers/wan26-image.ts` `buildPackagingPrompt()`
 
 ## 模型配置
 

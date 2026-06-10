@@ -65,7 +65,7 @@ npm run dev
 
 ## 文档
 
-- [**代码使用说明**](docs/CODE-USAGE.md) — 环境配置、四步流程、API 与常见问题
+- [**代码使用说明**](CODE-USAGE.md) — 环境配置、四步流程、API 与常见问题
 - [项目说明文档](docs/Project-Documentation.md)
 - [精炼 PRD](docs/MetaCut-PRD-Refined.md)
 - [Prompt 管理](docs/prompts/README.md)

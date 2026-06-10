@@ -23,6 +23,8 @@ npm run dev
 
 打开 http://localhost:3000 即可体验完整交互。
 
+> 样例视频建议控制在 **30 秒左右**（约 2 个渲染区块）；更长视频系统会继续按 15s/块拆分，但解析与渲染稳定性不保证。
+
 ## 技术栈
 
 - Next.js 14 (App Router) + TypeScript

@@ -249,14 +249,19 @@ export const workbenchActions = {
       clearInterval(uploadInterval);
       set({ uploadProgress: 100 });
 
-      if (!uploadRes.ok) throw new Error(uploadData.error);
+      if (!uploadRes.ok || !uploadData.url) {
+        throw new Error(uploadData.error || '上传失败：响应缺少视频地址');
+      }
 
       const videoUrl = uploadData.url;
       if (uploadData.projectId) set({ projectId: uploadData.projectId });
       set({ uploadedVideoUrl: videoUrl, uploadedFileName: uploadData.originalName });
       toast.success(`视频上传成功`);
 
-      workbenchActions.startRealParsing(videoUrl, uploadData.originalName);
+      workbenchActions.startRealParsing(
+        videoUrl,
+        uploadData.originalName || file.name
+      );
     } catch (err: unknown) {
       clearInterval(uploadInterval);
       toast.error(err instanceof Error ? err.message : '上传失败');
@@ -317,7 +322,7 @@ export const workbenchActions = {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ videoUrl, fileName, projectId: get().projectId }),
       });
-      const data = await readResponseJson<{ error?: string }>(res);
+      const data = await readResponseJson<AnalysisResult & { error?: string }>(res);
       if (!res.ok) throw new Error(data.error || '解析失败');
 
       set({ analysisResult: data, analysisProgress: 100 });

@@ -29,8 +29,18 @@ const PHASE_COLORS: Record<string, string> = {
   closing: "#06B6D4",
 };
 
-function phaseColor(stage: string): string {
-  return PHASE_COLORS[stage.trim().toLowerCase()] ?? "#64748B";
+function finiteNumber(value: unknown): number | null {
+  if (value === null || value === undefined || value === "") return null;
+  const number = Number(value);
+  return Number.isFinite(number) ? number : null;
+}
+
+function nonEmptyString(value: unknown): string {
+  return typeof value === "string" ? value.trim() : "";
+}
+
+function phaseColor(stage: unknown): string {
+  return PHASE_COLORS[nonEmptyString(stage).toLowerCase()] ?? "#64748B";
 }
 
 /** 样例视频 · 四轨（切镜叙事 / 字幕 / 音效 / 转场） */
@@ -39,73 +49,109 @@ export function buildSampleXRayTracks(
 ): XRayTrack[] {
   if (!analysis) return [];
 
-  const events = analysis.narrative_structure?.timeline_events ?? [];
-  const transitions = analysis.camera_and_composition?.camera_transitions ?? [];
-  const texts = analysis.on_screen_texts ?? [];
-  const sfx = analysis.audio_and_beats?.sound_effects ?? [];
+  const rawEvents = analysis.narrative_structure?.timeline_events;
+  const rawTransitions = analysis.camera_and_composition?.camera_transitions;
+  const rawTexts = analysis.on_screen_texts;
+  const rawSfx = analysis.audio_and_beats?.sound_effects;
+  const events = Array.isArray(rawEvents) ? rawEvents : [];
+  const transitions = Array.isArray(rawTransitions) ? rawTransitions : [];
+  const texts = Array.isArray(rawTexts) ? rawTexts : [];
+  const sfx = Array.isArray(rawSfx) ? rawSfx : [];
 
   return [
     {
       id: "shots",
       name: "切镜 / 叙事",
-      events: events.map((e) => ({
-        start: e.start,
-        end: e.end,
-        label: formatNarrativeStage(e.event_name),
-        color: phaseColor(e.event_name),
-        title: e.description
-          ? `${e.start.toFixed(1)}–${e.end.toFixed(1)}s · ${e.description}`
-          : `${e.start.toFixed(1)}–${e.end.toFixed(1)}s`,
-        detail: e.description,
-        meta: {
-          阶段: formatNarrativeStage(e.event_name),
-          情绪: e.emotion,
-        },
-      })),
+      events: events.flatMap<XRayTrackEvent>((e) => {
+        const start = finiteNumber(e?.start);
+        const end = finiteNumber(e?.end);
+        const stage = nonEmptyString(e?.event_name);
+        if (start === null || end === null || end <= start || !stage) return [];
+
+        const description = nonEmptyString(e?.description);
+        const emotion = nonEmptyString(e?.emotion);
+        const stageLabel = formatNarrativeStage(stage);
+        return [{
+          start,
+          end,
+          label: stageLabel,
+          color: phaseColor(stage),
+          title: description
+            ? `${start.toFixed(1)}–${end.toFixed(1)}s · ${description}`
+            : `${start.toFixed(1)}–${end.toFixed(1)}s`,
+          detail: description || undefined,
+          meta: {
+            阶段: stageLabel,
+            情绪: emotion || undefined,
+          },
+        }];
+      }),
     },
     {
       id: "subtitle",
       name: "字幕 / 花字",
-      events: texts.slice(0, 8).map((t) => ({
-        start: t.time,
-        end: t.time + Math.min(2.5, Math.max(0.8, (t.content?.length ?? 4) * 0.08)),
-        label: t.content.length > 10 ? `${t.content.slice(0, 10)}…` : t.content,
-        color: "#10B981",
-        title: t.content,
-        detail: t.content,
-        meta: { 时间: `${t.time.toFixed(1)}s` },
-      })),
+      events: texts.slice(0, 8).flatMap<XRayTrackEvent>((t) => {
+        const content = typeof t?.content === "string" ? t.content.trim() : "";
+        const time = Number(t?.time);
+        if (!content || !Number.isFinite(time)) return [];
+
+        return [{
+          start: time,
+          end: time + Math.min(2.5, Math.max(0.8, content.length * 0.08)),
+          label: content.length > 10 ? `${content.slice(0, 10)}…` : content,
+          color: "#10B981",
+          title: content,
+          detail: content,
+          meta: { 时间: `${time.toFixed(1)}s` },
+        }];
+      }),
     },
     {
       id: "audio",
       name: "音效",
-      events: sfx.slice(0, 8).map((s) => {
+      events: sfx.slice(0, 8).flatMap<XRayTrackEvent>((s) => {
         const detail = s as typeof s & {
           material?: string | null;
           action?: string | null;
           ambient?: string | null;
         };
-        return {
-          start: s.time,
-          end: s.time + 0.45,
-          label: s.type,
+        const time = finiteNumber(s?.time);
+        if (time === null) return [];
+
+        const type = nonEmptyString(s?.type) || "音效";
+        const description = [
+          type,
+          nonEmptyString(detail.material),
+          nonEmptyString(detail.action),
+          nonEmptyString(detail.ambient),
+        ].filter(Boolean).join(" · ");
+        return [{
+          start: time,
+          end: time + 0.45,
+          label: type,
           color: "#F59E0B",
-          detail: [s.type, detail.material, detail.action, detail.ambient].filter(Boolean).join(" · "),
-          meta: { 时间: `${s.time.toFixed(1)}s` },
-        };
+          detail: description,
+          meta: { 时间: `${time.toFixed(1)}s` },
+        }];
       }),
     },
     {
       id: "visual",
       name: "转场 / 视觉",
-      events: transitions.slice(0, 8).map((t) => ({
-        start: t.time,
-        end: t.time + 1.2,
-        label: t.type,
-        color: "#8B5CF6",
-        detail: t.type,
-        meta: { 时间: `${t.time.toFixed(1)}s` },
-      })),
+      events: transitions.slice(0, 8).flatMap<XRayTrackEvent>((t) => {
+        const time = finiteNumber(t?.time);
+        if (time === null) return [];
+
+        const type = nonEmptyString(t?.type) || "转场";
+        return [{
+          start: time,
+          end: time + 1.2,
+          label: type,
+          color: "#8B5CF6",
+          detail: type,
+          meta: { 时间: `${time.toFixed(1)}s` },
+        }];
+      }),
     },
   ];
 }

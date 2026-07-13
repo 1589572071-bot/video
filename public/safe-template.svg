@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="720" height="1280" viewBox="0 0 720 1280" role="img" aria-labelledby="title description">
+  <title id="title">MetaCut safe placeholder</title>
+  <desc id="description">Vertical placeholder used when visual assets are unavailable</desc>
+  <defs>
+    <linearGradient id="background" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0b0e14"/>
+      <stop offset="0.55" stop-color="#142333"/>
+      <stop offset="1" stop-color="#0b0e14"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="50%" cy="42%" r="48%">
+      <stop offset="0" stop-color="#00f0ff" stop-opacity=".28"/>
+      <stop offset="1" stop-color="#00f0ff" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="720" height="1280" fill="url(#background)"/>
+  <rect width="720" height="1280" fill="url(#glow)"/>
+  <g fill="none" stroke="#00f0ff" stroke-opacity=".5">
+    <rect x="90" y="310" width="540" height="660" rx="36"/>
+    <path d="M260 590l100-70 100 70v150l-100 70-100-70z"/>
+  </g>
+  <text x="360" y="875" fill="#ffffff" font-family="sans-serif" font-size="42" text-anchor="middle">MetaCut</text>
+  <text x="360" y="925" fill="#9ca3af" font-family="sans-serif" font-size="22" text-anchor="middle">Waiting for visual assets</text>
+</svg>

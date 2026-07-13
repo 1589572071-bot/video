@@ -34,7 +34,7 @@ export interface RenderInput {
   onProgress?: (progress: number, message: string) => void;
 }
 
-const SAFE_TEMPLATE_URL = "/uploads/keyframes/safe-template.svg";
+const SAFE_TEMPLATE_URL = "/safe-template.svg";
 
 function shouldUseMock(input: RenderInput): boolean {
   if (input.mockMode === true) return true;

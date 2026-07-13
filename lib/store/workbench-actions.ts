@@ -19,6 +19,7 @@ const set = (state: Partial<ReturnType<typeof useWorkbenchStore.getState>>) => u
 
 let scriptGenAbortController: AbortController | null = null;
 let renderPollGen = 0;
+const RENDER_POLL_TIMEOUT_MS = 12 * 60 * 1000;
 
 function mergeMaterialAnalysis<T extends Record<string, unknown> | null | undefined>(
   product: T,
@@ -162,7 +163,8 @@ export const workbenchActions = {
 
       const restoredScript = snapshot.currentScript?.script_markdown ?? null;
       const restoredManifest = snapshot.currentScript?.script_manifest ?? null;
-      const restoredGapPlan = snapshot.currentScript?.gap_plan ?? null;
+      const restoredGapPlan =
+        snapshot.currentScript?.gap_plan ?? restoredManifest?.gap_plan ?? null;
       const restoredVersionType = snapshot.currentScript?.version_type ?? undefined;
       const restoredVersion =
         restoredScript && restoredManifest
@@ -646,6 +648,14 @@ export const workbenchActions = {
   async applyGapStrategies() {
     const state = get();
     if (!state.scriptManifest || !state.gapPlan) return;
+    const blocks = Array.isArray(state.scriptManifest.blocks)
+      ? state.scriptManifest.blocks
+      : [];
+    const gaps = Array.isArray(state.gapPlan.gaps) ? state.gapPlan.gaps : [];
+    if (!blocks.length || !gaps.length) {
+      toast.error('剧本数据不完整，请重新生成剧本');
+      return;
+    }
     const choices = state.gapStrategyChoices;
     if (Object.keys(choices).length === 0) {
       toast.info('请先为缺口选择补全策略');
@@ -654,7 +664,7 @@ export const workbenchActions = {
 
     // 收集每个镜头需要追加的补全指令
     const shotInstructions = new Map<number, string[]>();
-    for (const gap of state.gapPlan.gaps) {
+    for (const gap of gaps) {
       const strategyKey = choices[gap.code];
       if (!strategyKey) continue;
       const strategy = GAP_FILL_STRATEGIES.find((s) => s.key === strategyKey);
@@ -662,7 +672,9 @@ export const workbenchActions = {
       const affected =
         gap.affected_shots && gap.affected_shots.length > 0
           ? gap.affected_shots
-          : state.scriptManifest.blocks.flatMap((b) => b.shots.map((s) => s.index));
+          : blocks.flatMap((b) =>
+              Array.isArray(b.shots) ? b.shots.map((s) => s.index) : []
+            );
       for (const idx of affected) {
         const arr = shotInstructions.get(idx) ?? [];
         arr.push(strategy.instruction);
@@ -672,9 +684,9 @@ export const workbenchActions = {
 
     const next = {
       ...state.scriptManifest,
-      blocks: state.scriptManifest.blocks.map((block) => ({
+      blocks: blocks.map((block) => ({
         ...block,
-        shots: block.shots.map((s) => {
+        shots: (Array.isArray(block.shots) ? block.shots : []).map((s) => {
           const extra = shotInstructions.get(s.index);
           if (!extra?.length) return s;
           const base = s.stage_brief?.trim();
@@ -712,6 +724,13 @@ export const workbenchActions = {
   async regenerateScriptWithStageBriefs() {
     const state = get();
     if (!state.scriptManifest) return;
+    const blocks = Array.isArray(state.scriptManifest.blocks)
+      ? state.scriptManifest.blocks
+      : [];
+    if (!blocks.length) {
+      toast.error('剧本数据不完整，请重新生成剧本');
+      return;
+    }
     if (state.isAnalyzingMaterial) {
       toast.info('素材理解中，完成后再更新剧本');
       return;
@@ -721,8 +740,8 @@ export const workbenchActions = {
     
     try {
       const projectId = await ensureCurrentProject();
-      const overrides = state.scriptManifest.blocks
-        .flatMap((b) => b.shots)
+      const overrides = blocks
+        .flatMap((b) => (Array.isArray(b.shots) ? b.shots : []))
         .filter((s) => s.stage_brief?.trim())
         .map((s) => ({
           shot_index: s.index,
@@ -784,12 +803,19 @@ export const workbenchActions = {
   handleShotBriefSave(shotIndex: number, brief: string) {
     const state = get();
     if (!state.scriptManifest) return;
+    const blocks = Array.isArray(state.scriptManifest.blocks)
+      ? state.scriptManifest.blocks
+      : [];
+    if (!blocks.length) {
+      toast.error('剧本数据不完整，请重新生成剧本');
+      return;
+    }
     
     const next = {
       ...state.scriptManifest,
-      blocks: state.scriptManifest.blocks.map((block) => ({
+      blocks: blocks.map((block) => ({
         ...block,
-        shots: block.shots.map((s) =>
+        shots: (Array.isArray(block.shots) ? block.shots : []).map((s) =>
           s.index === shotIndex
             ? { ...s, stage_brief: brief.trim() || undefined }
             : s
@@ -942,8 +968,12 @@ export const workbenchActions = {
         toast.info('百炼渲染任务已创建，正在轮询进度...');
         const jobId = data.jobId as string;
         let done = false;
+        const pollDeadline = Date.now() + RENDER_POLL_TIMEOUT_MS;
         while (!done) {
           if (pollGen !== renderPollGen) return;
+          if (Date.now() >= pollDeadline) {
+            throw new Error('渲染等待超时，请稍后重试或重新生成');
+          }
 
           await new Promise((r) => setTimeout(r, 2000));
 

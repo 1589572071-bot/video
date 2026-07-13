@@ -79,31 +79,46 @@ export default function ScriptStage() {
   );
 
   const sampleEvents = getTimelineEvents(analysisResult);
+  const gaps = Array.isArray(gapPlan?.gaps) ? gapPlan.gaps : [];
+  const resolutions = Array.isArray(gapPlan?.resolutions)
+    ? gapPlan.resolutions
+    : [];
   
   // Transform manifest blocks to the format needed by UI
   const alignedScriptBlocks = React.useMemo(() => {
-    if (!scriptManifest) return [];
-    return scriptManifest.blocks.map(block => ({
+    const blocks = Array.isArray(scriptManifest?.blocks)
+      ? scriptManifest.blocks
+      : [];
+    return blocks.map(block => {
+      const shots = Array.isArray(block.shots) ? block.shots : [];
+      const start = Number.isFinite(Number(block.start)) ? Number(block.start) : 0;
+      const end = Number.isFinite(Number(block.end)) ? Number(block.end) : start;
+      return {
       index: block.index,
-      timeRange: `${block.start.toFixed(1)}s - ${block.end.toFixed(1)}s`,
+      timeRange: `${start.toFixed(1)}s - ${end.toFixed(1)}s`,
       renderMode: block.render_mode === "T2V" ? "纯文本生成 (T2V)" : "图生视频 (I2V)",
-      shotCount: block.shots.length,
-      shots: block.shots.map(s => ({
-        index: s.index,
-        timeRange: `${s.start.toFixed(1)}s - ${s.end.toFixed(1)}s`,
-        start: s.start,
-        end: s.end,
-        phase: s.narrative_stage,
-        stageBrief: s.stage_brief,
-        packaging: s.packaging,
-        asset_source: s.asset_source,
-        is_aigc_supplement: s.is_aigc_supplement,
-        ui_label: s.ui_label,
-        requires_image_gen: s.requires_image_gen,
-        keyframe_url: s.keyframe_url,
-        gap_codes: s.gap_codes,
-      }))
-    }));
+      shotCount: shots.length,
+      shots: shots.map(s => {
+        const shotStart = Number.isFinite(Number(s.start)) ? Number(s.start) : start;
+        const shotEnd = Number.isFinite(Number(s.end)) ? Number(s.end) : shotStart;
+        return {
+          index: s.index,
+          timeRange: `${shotStart.toFixed(1)}s - ${shotEnd.toFixed(1)}s`,
+          start: shotStart,
+          end: shotEnd,
+          phase: s.narrative_stage,
+          stageBrief: s.stage_brief,
+          packaging: s.packaging,
+          asset_source: s.asset_source,
+          is_aigc_supplement: s.is_aigc_supplement,
+          ui_label: s.ui_label,
+          requires_image_gen: s.requires_image_gen,
+          keyframe_url: s.keyframe_url,
+          gap_codes: s.gap_codes,
+        };
+      })
+    };
+    });
   }, [scriptManifest]);
 
   const migrationProduct = React.useMemo((): ProductInput | null => {
@@ -220,7 +235,7 @@ export default function ScriptStage() {
         )}
 
         {/* 素材缺口检测与交互式补全 */}
-        {gapPlan && gapPlan.gaps.length > 0 && (
+        {gaps.length > 0 && (
           <div className="bg-black/20 rounded-2xl p-5 border border-[#F5B041]/30">
             <div className="text-sm font-medium text-[#F5B041] mb-1 flex items-center gap-2">
               <span className="w-2 h-2 rounded-full bg-[#F5B041]" />
@@ -228,7 +243,7 @@ export default function ScriptStage() {
             </div>
             <div className="text-xs text-white/40 mb-4">为每个缺口选择补全策略，应用后重写剧本</div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {gapPlan.gaps.map((g, i) => (
+              {gaps.map((g, i) => (
                 <div key={i} className="text-xs bg-[#131821] p-4 rounded-xl border border-white/5">
                   <div className="flex flex-wrap gap-2 items-center mb-3">
                     <span className={`px-2 py-1 rounded text-[10px] font-medium ${
@@ -266,7 +281,7 @@ export default function ScriptStage() {
                         );
                       })}
                     </div>
-                    {gapPlan.resolutions
+                    {resolutions
                       .filter((r) => r.gap_code === g.code)
                       .slice(0, 1)
                       .map((r, j) => (

@@ -28,15 +28,26 @@ function buildMarkdown(state: ReturnType<typeof useWorkbenchStore.getState>): st
   if (scriptManifest?.version_type) lines.push(`- 版本：${scriptManifest.version_type}`);
   lines.push("");
 
-  if (scriptManifest?.blocks?.length) {
+  const blocks = Array.isArray(scriptManifest?.blocks)
+    ? scriptManifest.blocks
+    : [];
+  if (blocks.length) {
     lines.push(`## 分镜时间线`);
     lines.push("");
     lines.push(`| 区块 | 镜头 | 时间 | 叙事阶段 | 素材来源 | 阶段说明 |`);
     lines.push(`| --- | --- | --- | --- | --- | --- |`);
-    for (const b of scriptManifest.blocks) {
-      for (const s of b.shots) {
+    for (const b of blocks) {
+      const shots = Array.isArray(b.shots) ? b.shots : [];
+      for (const s of shots) {
+        const start = Number(s.start);
+        const end = Number(s.end);
+        if (!Number.isFinite(start) || !Number.isFinite(end)) continue;
+        const stageBrief =
+          typeof s.stage_brief === "string"
+            ? s.stage_brief.replace(/\n/g, " ")
+            : "";
         lines.push(
-          `| ${b.index} | ${s.index} | ${s.start.toFixed(1)}-${s.end.toFixed(1)}s | ${s.narrative_stage} | ${s.asset_source ?? "-"} | ${(s.stage_brief ?? "").replace(/\n/g, " ")} |`
+          `| ${b.index} | ${s.index} | ${start.toFixed(1)}-${end.toFixed(1)}s | ${s.narrative_stage} | ${s.asset_source ?? "-"} | ${stageBrief} |`
         );
       }
     }

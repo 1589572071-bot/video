@@ -104,7 +104,7 @@ export default function ReferenceStage() {
                   <Upload className="w-8 h-8 text-[#00F0FF]" />
                 </div>
                 <div className="text-[#00F0FF] text-lg tracking-wider mb-2 font-medium">拖拽或点击上传爆款参考视频</div>
-                <div className="text-xs text-white/40">支持 MP4 / MOV / AVI，最大 100MB</div>
+                <div className="text-xs text-white/40">支持 MP4 / MOV / AVI，最大 50MB</div>
               </div>
             )}
           </div>

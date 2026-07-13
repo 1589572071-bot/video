@@ -197,7 +197,9 @@ function MappingRow({
       {row.gapCodes.length > 0 && (
         <div className="mt-2 flex flex-wrap gap-1 pl-1">
           {row.gapCodes.map((code) => {
-            const resolution = gapPlan?.resolutions.find((r) => r.gap_code === code);
+            const resolution = Array.isArray(gapPlan?.resolutions)
+              ? gapPlan.resolutions.find((r) => r.gap_code === code)
+              : undefined;
             return (
               <span
                 key={code}

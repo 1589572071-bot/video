@@ -36,13 +36,13 @@ export function formatFallbackStrategy(strategy: string): string {
 }
 
 export interface GapPlanLike {
-  gaps: Array<{
+  gaps?: Array<{
     code: string;
     severity: string;
     description: string;
     affected_shots?: number[];
   }>;
-  resolutions: Array<{
+  resolutions?: Array<{
     gap_code: string;
     strategy: string;
     description: string;
@@ -51,8 +51,8 @@ export interface GapPlanLike {
 }
 
 export function getGapsForShot(gapPlan: GapPlanLike | null | undefined, shotIndex: number) {
-  if (!gapPlan?.gaps.length) return [];
-  return gapPlan.gaps.filter((g) => {
+  const gaps = Array.isArray(gapPlan?.gaps) ? gapPlan.gaps : [];
+  return gaps.filter((g) => {
     if (!g.affected_shots?.length) return true;
     return g.affected_shots.includes(shotIndex);
   });
@@ -62,6 +62,9 @@ export function getResolutionLabel(
   gapPlan: GapPlanLike | null | undefined,
   gapCode: string
 ): string | undefined {
-  const resolution = gapPlan?.resolutions.find((r) => r.gap_code === gapCode);
+  const resolutions = Array.isArray(gapPlan?.resolutions)
+    ? gapPlan.resolutions
+    : [];
+  const resolution = resolutions.find((r) => r.gap_code === gapCode);
   return resolution?.ui_label ?? (resolution ? formatFallbackStrategy(resolution.strategy) : undefined);
 }

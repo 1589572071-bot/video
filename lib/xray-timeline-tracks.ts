@@ -157,12 +157,13 @@ export function buildSampleXRayTracks(
 }
 
 function cleanLegacyVoiceover(voiceover?: string): string {
-  if (!voiceover?.trim()) return "";
-  return voiceover.split(/[+＋]/)[0]?.trim() ?? "";
+  const value = nonEmptyString(voiceover);
+  if (!value) return "";
+  return value.split(/[+＋]/)[0]?.trim() ?? "";
 }
 
 function voiceSnippet(packaging?: { voice_script?: string; voiceover?: string } | null): string {
-  const direct = packaging?.voice_script?.trim();
+  const direct = nonEmptyString(packaging?.voice_script);
   if (direct) return direct;
   return cleanLegacyVoiceover(packaging?.voiceover);
 }
@@ -171,80 +172,100 @@ function voiceSnippet(packaging?: { voice_script?: string; voiceover?: string } 
 export function buildManifestXRayTracks(
   manifest: ScriptManifest | null | undefined
 ): XRayTrack[] {
-  if (!manifest?.blocks?.length) return [];
+  const blocks = Array.isArray(manifest?.blocks) ? manifest.blocks : [];
+  if (!blocks.length) return [];
 
-  const shots = manifest.blocks.flatMap((b) => b.shots);
-  const shotEvents: XRayTrackEvent[] = shots.map((s) => ({
-    start: s.start,
-    end: s.end,
-    label: `镜${s.index}`,
-    color: s.is_aigc_supplement ? "#F5B041" : phaseColor(s.narrative_stage),
-    title: [
-      `${s.start.toFixed(1)}–${s.end.toFixed(1)}s`,
-      formatNarrativeStage(s.narrative_stage),
-      s.stage_brief,
-      s.is_aigc_supplement ? s.ui_label ?? "AI 补足" : undefined,
-    ]
-      .filter(Boolean)
-      .join(" · "),
-    detail: [s.stage_brief, s.packaging?.narrative_content]
-      .filter(Boolean)
-      .join("\n"),
-    meta: {
-      阶段: formatNarrativeStage(s.narrative_stage),
-      资产: s.asset_source,
-      渲染: s.fallback_applied,
-    },
-  }));
+  const shots = blocks.flatMap((block) =>
+    Array.isArray(block?.shots) ? block.shots : []
+  );
+  const validShots = shots.flatMap((shot) => {
+    const start = finiteNumber(shot?.start);
+    const end = finiteNumber(shot?.end);
+    const stage = nonEmptyString(shot?.narrative_stage);
+    if (start === null || end === null || end <= start || !stage) return [];
+    return [{ shot, start, end, stage }];
+  });
+  const shotEvents: XRayTrackEvent[] = validShots.map(
+    ({ shot, start, end, stage }) => ({
+      start,
+      end,
+      label: `镜${shot.index}`,
+      color: shot.is_aigc_supplement ? "#F5B041" : phaseColor(stage),
+      title: [
+        `${start.toFixed(1)}–${end.toFixed(1)}s`,
+        formatNarrativeStage(stage),
+        shot.stage_brief,
+        shot.is_aigc_supplement ? shot.ui_label ?? "AI 补足" : undefined,
+      ]
+        .filter(Boolean)
+        .join(" · "),
+      detail: [shot.stage_brief, shot.packaging?.narrative_content]
+        .filter(Boolean)
+        .join("\n"),
+      meta: {
+        阶段: formatNarrativeStage(stage),
+        资产: shot.asset_source,
+        渲染: shot.fallback_applied,
+      },
+    })
+  );
 
   const subtitleEvents: XRayTrackEvent[] = [];
   const voiceEvents: XRayTrackEvent[] = [];
 
-  for (const s of shots) {
-    const text = s.packaging?.on_screen_text?.trim();
+  for (const { shot, start, end, stage } of validShots) {
+    const text = nonEmptyString(shot.packaging?.on_screen_text);
     if (text) {
       subtitleEvents.push({
-        start: s.start,
-        end: Math.min(s.end, s.start + 2.2),
+        start,
+        end: Math.min(end, start + 2.2),
         label: text.length > 10 ? `${text.slice(0, 10)}…` : text,
         color: "#10B981",
         title: text,
         detail: text,
         meta: {
-          镜头: `镜${s.index}`,
-          阶段: formatNarrativeStage(s.narrative_stage),
+          镜头: `镜${shot.index}`,
+          阶段: formatNarrativeStage(stage),
         },
       });
     }
-    const voice = voiceSnippet(s.packaging);
+    const voice = voiceSnippet(shot.packaging);
     if (voice) {
       voiceEvents.push({
-        start: s.start,
-        end: Math.min(s.end, s.start + Math.min(3, s.end - s.start)),
+        start,
+        end: Math.min(end, start + Math.min(3, end - start)),
         label: voice.length > 12 ? `${voice.slice(0, 12)}…` : voice,
         color: "#F59E0B",
         title: voice,
         detail: voice,
         meta: {
-          镜头: `镜${s.index}`,
-          阶段: formatNarrativeStage(s.narrative_stage),
+          镜头: `镜${shot.index}`,
+          阶段: formatNarrativeStage(stage),
         },
       });
     }
   }
 
-  const blockEvents: XRayTrackEvent[] = manifest.blocks.map((b) => ({
-    start: b.start,
-    end: b.end,
-    label: `区块${b.index}`,
-    color: b.render_mode.includes("I2V") ? "#8B5CF6" : "#00F0FF",
-    title: `${b.render_mode} · ${b.shots.length} 镜`,
-    detail: `${b.render_mode} · ${b.shots.length} 镜`,
-    meta: {
-      起止: `${b.start.toFixed(1)}–${b.end.toFixed(1)}s`,
-      模式: b.render_mode,
-    },
-  }));
+  const blockEvents: XRayTrackEvent[] = blocks.flatMap((block) => {
+    const start = finiteNumber(block?.start);
+    const end = finiteNumber(block?.end);
+    if (start === null || end === null || end <= start) return [];
+
+    const renderMode = nonEmptyString(block?.render_mode) || "T2V";
+    const shotCount = Array.isArray(block?.shots) ? block.shots.length : 0;
+    return [{
+      start,
+      end,
+      label: `区块${block.index}`,
+      color: renderMode.includes("I2V") ? "#8B5CF6" : "#00F0FF",
+      title: `${renderMode} · ${shotCount} 镜`,
+      detail: `${renderMode} · ${shotCount} 镜`,
+      meta: {
+        起止: `${start.toFixed(1)}–${end.toFixed(1)}s`,
+        模式: renderMode,
+      },
+    }];
+  });
 
   return [
     { id: "shots", name: "分镜 / 叙事", events: shotEvents },

@@ -145,8 +145,14 @@ export default function RightPanel() {
     }
   };
 
-  const scriptBlocksCount = scriptManifest?.blocks?.length ?? 0;
-  const scriptShotsCount = scriptManifest?.blocks?.reduce((s, b) => s + b.shots.length, 0) ?? 0;
+  const scriptBlocks = Array.isArray(scriptManifest?.blocks)
+    ? scriptManifest.blocks
+    : [];
+  const scriptBlocksCount = scriptBlocks.length;
+  const scriptShotsCount = scriptBlocks.reduce(
+    (sum, block) => sum + (Array.isArray(block.shots) ? block.shots.length : 0),
+    0
+  );
 
   return (
     <div className="flex flex-col h-full">

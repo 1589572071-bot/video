@@ -95,7 +95,7 @@ Sealos DevBox 可使用根目录 `entrypoint.sh` 自动 `npm ci` → `npm run bu
 |------|------|----------------|
 | `DOUBAO_APIKEY` / `DOUBAO_EP` | Step1/2/3、AI 导演、素材分析 | 视频解析与剧本生成不可用，顶部告警 |
 | `DASHSCOPE_API_KEY` | Step4 万相 2.6 生图/生视频 | 渲染进入 Mock 模式，成片为占位示例 |
-| `METACUT_PUBLIC_ORIGIN` | 百炼拉取本地上传素材的公网地址 | 图生视频/参考图可能失败 |
+| `METACUT_PUBLIC_ORIGIN`（或兼容变量 `NEXT_PUBLIC_APP_ORIGIN`） | 百炼拉取本地上传素材的公网地址 | 图生视频/参考图可能失败 |
 | `DATABASE_URL` | PostgreSQL 持久化 | 项目无法跨重启恢复 |
 | `S3_*` | 对象存储 | 上传回退到本地 `public/uploads` |
 | `METACUT_REVIEW_ACCESS_CODE` | 公网评审访问码 | 入口无访问码保护 |

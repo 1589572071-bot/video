@@ -17,6 +17,22 @@ export default function Sidebar() {
   const parsedProduct = useWorkbenchStore((s) => s.parsedProduct);
   const scriptManifest = useWorkbenchStore((s) => s.scriptManifest);
   const generatedVideoUrl = useWorkbenchStore((s) => s.generatedVideoUrl);
+  const rawTimelineEvents = analysisResult?.narrative_structure?.timeline_events;
+  const timelineEvents = Array.isArray(rawTimelineEvents)
+    ? rawTimelineEvents.flatMap((event) => {
+        const start = Number(event?.start);
+        const end = Number(event?.end);
+        if (
+          !Number.isFinite(start) ||
+          !Number.isFinite(end) ||
+          end <= start ||
+          typeof event?.event_name !== 'string'
+        ) {
+          return [];
+        }
+        return [{ ...event, start, end }];
+      })
+    : [];
 
   // 各步完成状态
   const done: Record<ActiveTab, boolean> = {
@@ -91,9 +107,9 @@ export default function Sidebar() {
         <div className="text-xs font-medium text-white/50 mb-3 uppercase tracking-wider">
           项目大纲
         </div>
-        {analysisResult?.narrative_structure?.timeline_events ? (
+        {timelineEvents.length > 0 ? (
           <div className="space-y-2">
-            {analysisResult.narrative_structure.timeline_events.map((ev, i) => (
+            {timelineEvents.map((ev, i) => (
               <div key={i} className="flex items-start gap-2 text-xs">
                 <div className="w-1.5 h-1.5 rounded-full bg-[#00F0FF] mt-1.5 shrink-0" />
                 <div>
